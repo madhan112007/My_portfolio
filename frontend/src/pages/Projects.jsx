@@ -5,7 +5,7 @@ import { ExternalLink, Box } from 'lucide-react';
 import { techIcons } from '../data/techIcons';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const ProjectCard = ({ project, index }) => {
   return (
