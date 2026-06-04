@@ -1,4 +1,5 @@
-import React, { useRef, Suspense, lazy } from 'react';
+import React, { useRef, Suspense, lazy, useState } from 'react';
+import BookLanding from './components/BookLanding';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
@@ -25,10 +26,13 @@ const Loading = () => (
 
 const App = () => {
   const particleRef = useRef();
+  const [entered, setEntered] = useState(false);
 
   const handleTransition = () => {
     particleRef.current?.triggerBurst();
   };
+
+  if (!entered) return <BookLanding onEnter={() => setEntered(true)} />;
 
   return (
     <ThemeProvider>
