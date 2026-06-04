@@ -1,34 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Medal } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { achievements } from '../data/achievements';
 
 const Achievements = () => {
-  const [achievements, setAchievements] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAchievements = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/achievements`);
-        setAchievements(res.data);
-      } catch (err) {
-        console.error('Error fetching achievements:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAchievements();
-  }, []);
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-12 h-12 border-4 border-[var(--accent-color)] border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-
   return (
     <div className="container mx-auto px-6 py-20">
       <motion.h2

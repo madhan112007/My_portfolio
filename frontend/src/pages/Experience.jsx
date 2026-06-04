@@ -1,33 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { experience } from '../data/experience';
 
 const Experience = () => {
-  const [experience, setExperience] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchExperience = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/experience`);
-        setExperience(res.data);
-      } catch (err) {
-        console.error('Error fetching experience:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchExperience();
-  }, []);
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-12 h-12 border-4 border-[var(--accent-color)] border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-
   return (
     <div className="container mx-auto px-6 py-20 relative overflow-hidden">
       <motion.h2
