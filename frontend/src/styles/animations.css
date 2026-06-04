@@ -1,0 +1,77 @@
+/* 3D page turn */
+@keyframes turnForward {
+  0%   { transform: rotateY(0deg); box-shadow: 4px 0 12px rgba(0,0,0,0.3); }
+  30%  { box-shadow: 12px 0 30px rgba(0,0,0,0.5); }
+  100% { transform: rotateY(-180deg); box-shadow: 0px 0 0px rgba(0,0,0,0); }
+}
+
+@keyframes turnBackward {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+@keyframes settleForward {
+  0%   { transform: rotateY(-180deg); }
+  80%  { transform: rotateY(-176deg); }
+  100% { transform: rotateY(-180deg); }
+}
+
+/* Gold pulse */
+@keyframes goldPulse {
+  0%,100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* Ink bleed in */
+@keyframes inkBleed {
+  0%   { opacity: 0; filter: blur(4px); transform: translateY(8px); }
+  100% { opacity: 1; filter: blur(0);   transform: translateY(0); }
+}
+.ink-bleed { animation: inkBleed 0.6s ease-out forwards; }
+
+/* Wax stamp press */
+@keyframes waxStamp {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.82); }
+  70%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.wax-stamp { animation: waxStamp 0.45s ease-in-out forwards; }
+
+/* Constellation node pulse */
+@keyframes starPulse {
+  0%,100% { r: 4; opacity: 0.8; }
+  50%      { r: 6; opacity: 1; }
+}
+
+/* Paragraph hover glow */
+.manuscript-para {
+  transition: box-shadow 0.3s ease;
+  border-radius: 2px;
+  padding: 2px 4px;
+}
+.manuscript-para:hover {
+  box-shadow: 0 0 14px rgba(255,215,0,0.07);
+}
+
+/* Ink trail dot */
+.ink-dot {
+  position: fixed;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #B8860B;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.5s ease;
+}
+
+/* Page turn crease overlay */
+.page-crease {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: background 0.05s linear;
+}

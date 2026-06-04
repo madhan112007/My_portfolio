@@ -1,0 +1,213 @@
+/* Wooden table background */
+.book-table {
+  min-height: 100vh;
+  background-color: var(--table-bg);
+  background-image:
+    repeating-linear-gradient(90deg,  rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 60px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Candle ambient glow */
+.book-table::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 320px 240px at 8% 12%,  rgba(255,180,60,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 320px 240px at 92% 10%, rgba(255,180,60,0.10) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Outer book wrapper */
+.book-outer {
+  position: relative;
+  display: flex;
+  max-width: 1140px;
+  width: 100%;
+  min-height: 720px;
+  border-radius: 4px;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.75),
+    0 4px 12px rgba(0,0,0,0.5),
+    inset 0 0 40px rgba(0,0,0,0.08);
+  perspective: 2000px;
+  z-index: 1;
+}
+
+/* Leather binding strips */
+.book-binding-left,
+.book-binding-right {
+  width: 14px;
+  background: linear-gradient(90deg, #1A0604, #2A0A08, #1A0604);
+  flex-shrink: 0;
+  border-radius: 3px 0 0 3px;
+}
+.book-binding-right {
+  border-radius: 0 3px 3px 0;
+}
+
+/* Book spine center */
+.book-spine {
+  width: 36px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #1A0804, #2A1008, #1A0804);
+  background-image: repeating-linear-gradient(
+    180deg, transparent, transparent 20px,
+    rgba(255,180,0,0.07) 20px, rgba(255,180,0,0.07) 21px
+  );
+  box-shadow: inset 4px 0 8px rgba(0,0,0,0.5), inset -4px 0 8px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Silk ribbon bookmark */
+.spine-ribbon {
+  width: 8px;
+  height: 70px;
+  background: linear-gradient(180deg, #8B1A1A, #6B1212);
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+  margin-top: 4px;
+}
+
+/* Page stack bottom edge */
+.page-stack-edge {
+  position: absolute;
+  bottom: -7px;
+  left: 14px;
+  right: 14px;
+  height: 7px;
+  background: repeating-linear-gradient(
+    90deg, #E8D5A3, #D4BC8A 2px, #C9A87A 3px, #E0CC9A 4px
+  );
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+}
+
+/* Brass corner clasps */
+.clasp {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  z-index: 5;
+}
+.clasp-tl { top: -2px;  left: -2px; }
+.clasp-tr { top: -2px;  right: -2px; }
+.clasp-bl { bottom: -2px; left: -2px; }
+.clasp-br { bottom: -2px; right: -2px; }
+
+/* Chapter tabs */
+.chapter-tabs {
+  position: absolute;
+  right: -38px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+}
+
+.chapter-tab {
+  width: 38px;
+  height: 54px;
+  background: #6B1A1A;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  position: relative;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+}
+
+.chapter-tab:hover  { transform: scaleX(1.08); background: #8B2222; }
+.chapter-tab.active { background: #B8860B; }
+
+.chapter-tab span {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: #FFD700;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.chapter-tab.active span { color: #1A0804; }
+
+.tab-dot {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background: #FFD700;
+  border-radius: 50%;
+}
+
+/* Sound & theme toggles on book border */
+.book-controls {
+  position: absolute;
+  top: -36px;
+  right: 0;
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+}
+
+.book-ctrl-btn {
+  width: 28px;
+  height: 28px;
+  background: #2A1008;
+  border: 1px solid #B8860B;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #B8860B;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+.book-ctrl-btn:hover { background: #3D1A08; }
+
+/* Mobile single page */
+@media (max-width: 768px) {
+  .book-outer { min-height: 85vh; flex-direction: column; }
+  .chapter-tabs {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    top: auto; right: auto;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    overflow-x: auto;
+    background: #1A0804;
+    padding: 4px 8px;
+    gap: 3px;
+    z-index: 50;
+  }
+  .chapter-tab {
+    width: 54px; height: 34px;
+    border-radius: 4px 4px 0 0;
+  }
+  .chapter-tab span {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 7px;
+  }
+  .book-binding-left, .book-binding-right { display: none; }
+}

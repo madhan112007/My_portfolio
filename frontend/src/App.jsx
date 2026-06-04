@@ -1,11 +1,13 @@
 import React, { useRef, Suspense, lazy, useState } from 'react';
 import BookLanding from './components/BookLanding';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import ParticleCanvas from './components/ParticleCanvas';
 import CursorTrail from './components/CursorTrail';
-import PageTurnTransition from './components/PageTurnTransition';
+import ThreeBook from './components/ThreeBook';
+import SidePanels from './components/SidePanels';
+import { AnimatePresence, motion } from 'framer-motion';
 import './index.css';
 
 // Lazy load pages
@@ -19,50 +21,71 @@ const Certifications = lazy(() => import('./pages/Certifications'));
 const Contact = lazy(() => import('./pages/Contact'));
 
 const Loading = () => (
-  <div className="flex items-center justify-center h-screen bg-[var(--bg-color)]">
-    <div className="w-16 h-16 border-4 border-[var(--accent-color)] border-t-transparent rounded-full animate-spin"></div>
+  <div className="flex items-center justify-center h-screen bg-[#0A0704]">
+    <div className="w-16 h-16 border-4 border-[#B8860B] border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
-const App = () => {
+const PortfolioContent = () => {
   const particleRef = useRef();
+  
+  const pages = [
+    { path: '/', element: <Home /> },
+    { path: '/about', element: <About /> },
+    { path: '/projects', element: <Projects /> },
+    { path: '/experience', element: <Experience /> },
+    { path: '/skills', element: <Skills /> },
+    { path: '/achievements', element: <Achievements /> },
+    { path: '/certifications', element: <Certifications /> },
+    { path: '/contact', element: <Contact /> },
+  ];
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-color)', position: 'relative' }}
+      className="selection:bg-[#B8860B] selection:text-white">
+      <Navbar />
+      <ParticleCanvas ref={particleRef} />
+      <CursorTrail />
+      <SidePanels />
+
+      <Suspense fallback={<Loading />}>
+        <ThreeBook pages={pages} />
+      </Suspense>
+
+      <footer className="fixed bottom-4 w-full text-center font-subheading opacity-60 pointer-events-none z-50"
+        style={{ color: 'var(--accent-color)' }}>
+        <p>Madhan S · 2026</p>
+      </footer>
+    </div>
+  );
+};
+
+const App = () => {
   const [entered, setEntered] = useState(false);
-
-  const handleTransition = () => {
-    particleRef.current?.triggerBurst();
-  };
-
-  if (!entered) return <BookLanding onEnter={() => setEntered(true)} />;
 
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen parchment-texture selection:bg-[var(--accent-color)] selection:text-white">
-          <Navbar />
-          <ParticleCanvas ref={particleRef} />
-          <CursorTrail />
-          
-          <Suspense fallback={<Loading />}>
-            <PageTurnTransition onTransitionStart={handleTransition}>
-              <main className="pt-20">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/projects" element={<Projects />} />
-                  <Route path="/experience" element={<Experience />} />
-                  <Route path="/skills" element={<Skills />} />
-                  <Route path="/achievements" element={<Achievements />} />
-                  <Route path="/certifications" element={<Certifications />} />
-                  <Route path="/contact" element={<Contact />} />
-                </Routes>
-              </main>
-            </PageTurnTransition>
-          </Suspense>
-
-          <footer className="py-8 text-center font-subheading text-[var(--text-secondary)] border-t border-[var(--border-color)]/30 mt-auto">
-            <p>Crafted with ink & code by Madhan S · 2026</p>
-          </footer>
-        </div>
+        <AnimatePresence mode="wait">
+          {!entered ? (
+            <motion.div
+              key="landing"
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <BookLanding onEnter={() => setEntered(true)} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="portfolio"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1 }}
+            >
+              <PortfolioContent />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Router>
     </ThemeProvider>
   );

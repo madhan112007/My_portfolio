@@ -1,171 +1,109 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Send, Phone } from 'lucide-react';
+import { Mail, Send } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
-
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const socials = [
+  { icon: <Mail size={15} />, link: 'https://mail.google.com/mail/?view=cm&to=codethetrend@gmail.com', label: 'codethetrend@gmail.com' },
+  { icon: <FaLinkedin size={15} />, link: 'https://linkedin.com/in/madhan-s-727b85332/', label: 'linkedin.com/in/madhan-s' },
+  { icon: <FaGithub size={15} />, link: 'https://github.com/madhan112007', label: 'github.com/madhan112007' },
+];
+
 const Contact = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [status, setStatus] = useState('idle');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('sending');
     try {
-      await axios.post(`${API_URL}/contact`, formData);
+      await axios.post(`${API_URL}/contact`, form);
       setStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setForm({ name: '', email: '', subject: '', message: '' });
       setTimeout(() => setStatus('idle'), 3000);
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setStatus('error');
-    }
+    } catch { setStatus('error'); }
   };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const socials = [
-    { icon: <Mail />, link: "https://mail.google.com/mail/?view=cm&to=codethetrend@gmail.com", label: "Email" },
-
-    { icon: <FaLinkedin />, link: "https://linkedin.com/in/madhan-s-727b85332/", label: "LinkedIn" },
-    { icon: <FaGithub />, link: "https://github.com/madhan112007", label: "GitHub" },
-  ];
 
   return (
-    <div className="container mx-auto px-6 py-20">
-      <motion.h2
-        initial={{ opacity: 0, x: -50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        className="text-4xl md:text-5xl font-bold mb-16 border-b-2 border-[var(--border-color)] pb-4 inline-block"
-      >
-        Send a Letter
-      </motion.h2>
+    <div style={{ padding: '4px 0' }}>
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <h2 className="section-title" style={{ fontSize: 22 }}>Send a Letter</h2>
+        <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.3em', color: 'var(--accent-color)', opacity: 0.6, marginTop: 8 }}>
+          MAGICAL CORRESPONDENCE
+        </p>
+      </div>
 
-      <div className="grid lg:grid-cols-2 gap-16 items-start">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="space-y-12"
-        >
-          <div className="bg-[var(--surface-color)] p-8 border-2 border-[var(--border-color)]/30 rounded-sm parchment-texture relative">
-            <h3 className="font-heading text-2xl font-bold mb-6">Contact Details</h3>
-            <div className="space-y-6">
-              {socials.map((social, i) => (
-                <a
-                  key={i}
-                  href={social.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-4 text-[var(--text-secondary)] hover:text-[var(--accent-color)] transition-colors group"
-                >
-                  <div className="p-3 bg-[var(--bg-color)] border border-[var(--border-color)]/20 rounded-sm group-hover:magical-glow transition-all">
-                    {social.icon}
-                  </div>
-                  <span className="font-mono text-sm">{social.label}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <a
-            href="tel:+919363752394"
-            className="flex items-center justify-center gap-3 w-full py-4 border-2 border-[var(--accent-color)] text-[var(--accent-color)] font-bold rounded-sm hover:bg-[var(--accent-color)] hover:text-[var(--bg-color)] transition-all"
+      {/* Socials */}
+      <div className="book-card" style={{ borderRadius: 4, padding: '16px 20px', marginBottom: 20 }}>
+        <h3 style={{ fontFamily: 'Cinzel Decorative, serif', fontSize: 11, color: 'var(--text-primary)', marginBottom: 14, letterSpacing: '0.12em' }}>
+          Registry
+        </h3>
+        {socials.map((s, i) => (
+          <motion.a key={i} href={s.link} target="_blank" rel="noopener noreferrer"
+            whileHover={{ x: 4 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0',
+              borderBottom: i < socials.length - 1 ? '1px solid var(--border-faint)' : 'none',
+              textDecoration: 'none', color: 'var(--text-secondary)', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-color)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
           >
-            <Phone size={18} /> Book a Call
-          </a>
+            <span style={{ color: 'var(--accent-color)' }}>{s.icon}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>{s.label}</span>
+          </motion.a>
+        ))}
+      </div>
 
-          <div className="p-8 border-2 border-dashed border-[var(--border-color)]/30 rounded-sm">
-            <p className="font-body text-lg italic text-[var(--text-secondary)]">
-              "I am always eager to collaborate on ambitious projects or discuss the latest in AI and robotics. My quill is ready for your correspondence."
-            </p>
+      {/* Form */}
+      <div className="book-card" style={{ borderRadius: 4, padding: '20px 22px' }}>
+        <h3 style={{ fontFamily: 'Cinzel Decorative, serif', fontSize: 11, color: 'var(--text-primary)', marginBottom: 18, letterSpacing: '0.12em' }}>
+          Compose Message
+        </h3>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[
+            { key: 'name', label: 'Your Name', type: 'text' },
+            { key: 'email', label: 'Your Email', type: 'email' },
+            { key: 'subject', label: 'Subject', type: 'text' },
+          ].map(({ key, label, type }) => (
+            <div key={key}>
+              <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.2em', color: 'var(--accent-color)', opacity: 0.7, display: 'block', marginBottom: 4 }}>
+                {label.toUpperCase()}
+              </label>
+              <input type={type} required value={form[key]}
+                onChange={e => setForm({ ...form, [key]: e.target.value })}
+                className="book-input" />
+            </div>
+          ))}
+          <div>
+            <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.2em', color: 'var(--accent-color)', opacity: 0.7, display: 'block', marginBottom: 4 }}>
+              MESSAGE
+            </label>
+            <textarea required rows={4} value={form.message}
+              onChange={e => setForm({ ...form, message: e.target.value })}
+              className="book-input" style={{ resize: 'none' }} />
           </div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-[var(--surface-color)] p-10 border-2 border-[var(--border-color)] shadow-2xl rounded-sm parchment-texture relative"
-        >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="font-mono text-xs uppercase tracking-widest text-[var(--text-secondary)]">Name</label>
-                <input
-                  required
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full bg-[var(--bg-color)]/50 border-b-2 border-[var(--border-color)]/30 focus:border-[var(--accent-color)] outline-none py-2 px-4 font-body transition-colors"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="font-mono text-xs uppercase tracking-widest text-[var(--text-secondary)]">Email</label>
-                <input
-                  required
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full bg-[var(--bg-color)]/50 border-b-2 border-[var(--border-color)]/30 focus:border-[var(--accent-color)] outline-none py-2 px-4 font-body transition-colors"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="font-mono text-xs uppercase tracking-widest text-[var(--text-secondary)]">Subject</label>
-              <input
-                required
-                type="text"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                className="w-full bg-[var(--bg-color)]/50 border-b-2 border-[var(--border-color)]/30 focus:border-[var(--accent-color)] outline-none py-2 px-4 font-body transition-colors"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="font-mono text-xs uppercase tracking-widest text-[var(--text-secondary)]">Message</label>
-              <textarea
-                required
-                name="message"
-                rows="5"
-                value={formData.message}
-                onChange={handleChange}
-                className="w-full bg-[var(--bg-color)]/50 border-b-2 border-[var(--border-color)]/30 focus:border-[var(--accent-color)] outline-none py-2 px-4 font-body transition-colors resize-none"
-              ></textarea>
-            </div>
-            
-            <button
-              disabled={status === 'sending'}
-              type="submit"
-              className="w-full py-4 bg-[var(--accent-color)] text-[var(--bg-color)] font-bold rounded-sm flex items-center justify-center gap-3 hover:magical-glow transition-all disabled:opacity-50"
-            >
-              {status === 'sending' ? 'Sending...' : status === 'success' ? 'Letter Sent! ✉️' : (
-                <>Send with a Seal <Send size={18} /></>
-              )}
-            </button>
-          </form>
+          <motion.button type="submit" disabled={status === 'sending'}
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            style={{
+              padding: '10px 24px', background: 'var(--accent-color)', color: '#0D0A06',
+              border: 'none', borderRadius: 2, cursor: 'pointer',
+              fontFamily: 'Cinzel Decorative, serif', fontSize: 11, letterSpacing: '0.12em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 0 16px var(--glow-color)', opacity: status === 'sending' ? 0.6 : 1,
+            }}>
+            {status === 'sending' ? 'Dispatching...' : status === 'success' ? '✉ Letter Sent!' : <><span>Dispatch with Seal</span><Send size={13} /></>}
+          </motion.button>
+        </form>
+      </div>
 
-          {/* Decorative wax seal stamp animation area */}
-          {status === 'success' && (
-            <motion.div
-              initial={{ scale: 2, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            >
-              <div className="w-32 h-32 bg-red-900/40 rounded-full border-8 border-red-800/20 flex items-center justify-center">
-                <span className="text-4xl">SEALED</span>
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
+      <div style={{ textAlign: 'center', marginTop: 20, opacity: 0.35 }}>
+        <div className="gold-divider" />
+        <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 11, fontStyle: 'italic', color: 'var(--text-secondary)', marginTop: 8 }}>
+          "Your correspondence is valued in all realms."
+        </p>
       </div>
     </div>
   );
