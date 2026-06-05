@@ -283,6 +283,63 @@ const SceneCanvas = ({ isDark }) => {
     const bookSpineM = mkBox(0.025, 0.045, 0.53, std(0x2A1206, 0.9));
     add(bookSpineM, -0.285, 0.928, -0.52);
 
+    /* ── CANDLE ON DESK (dark mode only) ── */
+    if (isDark) {
+    const candleX = 0.75, candleY = 0.924, candleZ = -0.45;
+
+    const holderDish = mkCyl(0.055, 0.050, 0.018, 16, std(0x9B7215, 0.25, 0.8));
+    add(holderDish, candleX, candleY + 0.009, candleZ);
+    const holderRim = new THREE.Mesh(
+      new THREE.TorusGeometry(0.055, 0.008, 8, 20),
+      std(0xB8860B, 0.2, 0.85)
+    );
+    holderRim.position.set(candleX, candleY + 0.018, candleZ);
+    scene.add(holderRim);
+    const handle = new THREE.Mesh(
+      new THREE.TorusGeometry(0.03, 0.007, 6, 12, Math.PI),
+      std(0xB8860B, 0.2, 0.85)
+    );
+    handle.rotation.x = Math.PI / 2;
+    handle.rotation.z = Math.PI / 2;
+    handle.position.set(candleX + 0.085, candleY + 0.009, candleZ);
+    scene.add(handle);
+    const candleWax = mkCyl(0.028, 0.032, 0.14, 14, std(0xF5ECD5, 0.88));
+    add(candleWax, candleX, candleY + 0.088, candleZ);
+    const dripMat = std(0xEEDDBB, 0.9);
+    [[0.022, 0.055, 0.01], [-0.018, 0.035, 0.02]].forEach(([dx, dy, dz]) => {
+      const drip = mkCyl(0.007, 0.013, 0.028, 8, dripMat);
+      add(drip, candleX + dx, candleY + dy, candleZ + dz, 0.25, 0, 0.15);
+    });
+    const wick = mkCyl(0.002, 0.002, 0.02, 4, std(0x1A0F05, 0.95));
+    add(wick, candleX, candleY + 0.168, candleZ);
+    const flameOuter = new THREE.Mesh(
+      new THREE.ConeGeometry(0.018, 0.065, 8),
+      new THREE.MeshStandardMaterial({ color: 0xFF5500, emissive: 0xFF3300, emissiveIntensity: 4, transparent: true, opacity: 0.9, depthWrite: false })
+    );
+    flameOuter.position.set(candleX, candleY + 0.213, candleZ);
+    scene.add(flameOuter);
+    const flameInner = new THREE.Mesh(
+      new THREE.ConeGeometry(0.009, 0.042, 8),
+      new THREE.MeshStandardMaterial({ color: 0xFFEE44, emissive: 0xFFCC00, emissiveIntensity: 6, transparent: true, opacity: 1, depthWrite: false })
+    );
+    flameInner.position.set(candleX, candleY + 0.218, candleZ);
+    scene.add(flameInner);
+    const glowSprite = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.14, 0.14),
+      new THREE.MeshBasicMaterial({ color: 0xFF8800, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide })
+    );
+    glowSprite.position.set(candleX, candleY + 0.215, candleZ);
+    scene.add(glowSprite);
+    const candleLight = new THREE.PointLight(0xFF8822, 2.2, 2.8, 2);
+    candleLight.position.set(candleX, candleY + 0.22, candleZ);
+    candleLight.castShadow = true;
+    candleLight.shadow.mapSize.set(256, 256);
+    scene.add(candleLight);
+
+    // Store for animation loop
+    scene.userData.darkModeAnimated = { candleLight, flameOuter, flameInner, glowSprite, candleX };
+    } // end isDark candle
+
     /* ── QUILL + INKWELL ── */
     const inkwellMat = std(0x120E0A, 0.2, 0.6);
     const inkwell = mkCyl(0.038, 0.034, 0.072, 14, inkwellMat);
@@ -416,26 +473,155 @@ const SceneCanvas = ({ isDark }) => {
     // Dark mode: very dim warm ambient. Light mode: bright daylight.
     scene.add(new THREE.AmbientLight(
       isDark ? 0xFFEECC : 0xFFF5E0,
-      isDark ? 0.03 : 1.2
+      isDark ? 0.35 : 1.2
     ));
     const fillLight = new THREE.DirectionalLight(
       isDark ? 0xFFDDAA : 0xFFF0CC,
-      isDark ? 0.04 : 1.5
+      isDark ? 0.15 : 1.5
     );
     fillLight.position.set(2, 5, 3);
     fillLight.castShadow = true;
     scene.add(fillLight);
-    // Light mode: sun shaft through window
+    // Light mode exclusives
     if (!isDark) {
-      const sunSpot = new THREE.SpotLight(0xFFE8A0, 2.5, 8, Math.PI / 7, 0.5);
-      sunSpot.position.set(-2.8, 3.5, -0.5);
-      sunSpot.target.position.set(0, 0.5, 0);
+      orbLight1.intensity = 0.8;
+      orbLight2.intensity = 0.6;
+
+      /* ── 1. SUN SHAFT through window ── */
+      const sunSpot = new THREE.SpotLight(0xFFE8A0, 3.5, 10, Math.PI / 9, 0.3);
+      sunSpot.position.set(-2.8, 4.0, -0.2);
+      sunSpot.target.position.set(0.5, 0, 0.5);
       sunSpot.castShadow = true;
       scene.add(sunSpot);
       scene.add(sunSpot.target);
-      // Boost orb lights in light mode too
-      orbLight1.intensity = 0.8;
-      orbLight2.intensity = 0.6;
+
+      // Volumetric shaft planes (stacked semi-transparent quads)
+      const shaftMat = new THREE.MeshBasicMaterial({
+        color: 0xFFEEAA, transparent: true, opacity: 0.045,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      for (let i = 0; i < 6; i++) {
+        const shaft = new THREE.Mesh(new THREE.PlaneGeometry(0.5 + i * 0.18, 3.5), shaftMat.clone());
+        shaft.position.set(-2.1 + i * 0.28, 1.8, -0.5 + i * 0.08);
+        shaft.rotation.set(0.18, Math.PI / 2 - 0.22, 0.08);
+        scene.add(shaft);
+      }
+      // Bar shadow stripes on floor
+      for (let b = -2; b <= 2; b++) {
+        const stripe = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.04, 1.4),
+          new THREE.MeshBasicMaterial({ color: 0x3A2800, transparent: true, opacity: 0.18, depthWrite: false })
+        );
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(-0.6 + b * 0.22, 0.01, 0.6);
+        scene.add(stripe);
+      }
+
+      /* ── 2. POTTED HERB PLANT on desk corner ── */
+      // Terracotta pot
+      const potPlantMat = std(0xC1440E, 0.85);
+      const plantPot = mkCyl(0.062, 0.05, 0.1, 14, potPlantMat);
+      add(plantPot, -0.78, 0.93, -0.38);
+      const plantPotRim = new THREE.Mesh(new THREE.TorusGeometry(0.063, 0.009, 8, 18), potPlantMat);
+      plantPotRim.position.set(-0.78, 0.982, -0.38);
+      scene.add(plantPotRim);
+      // Soil top
+      const soil = new THREE.Mesh(new THREE.CircleGeometry(0.058, 14), std(0x3A2510, 0.97));
+      soil.rotation.x = -Math.PI / 2;
+      soil.position.set(-0.78, 0.983, -0.38);
+      scene.add(soil);
+      // Stems + leaves (simple tapered cylinders + planes)
+      const stemMat = std(0x2D5A1B, 0.85);
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x3A7A20, roughness: 0.8, side: THREE.DoubleSide });
+      const stems = [[-0.01, 0, 0.01, 0.1], [0.01, 0.05, -0.01, 0.09], [-0.02, 0.02, -0.01, 0.08]]; // dx,dz,tilt,h
+      stems.forEach(([dx, dz, tilt, h], i) => {
+        const stem = mkCyl(0.004, 0.007, h, 5, stemMat);
+        stem.position.set(-0.78 + dx, 0.983 + h / 2, -0.38 + dz);
+        stem.rotation.z = tilt;
+        scene.add(stem);
+        // leaf at tip
+        const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.04), leafMat);
+        leaf.position.set(-0.78 + dx + Math.sin(tilt) * h * 0.5, 0.983 + h, -0.38 + dz);
+        leaf.rotation.set(0.3, (i * 1.2), 0.2 * (i % 2 === 0 ? 1 : -1));
+        scene.add(leaf);
+      });
+
+      /* ── 3. ALCHEMIST FLASK on desk ── */
+      const flaskX = 0.75, flaskY = 0.924, flaskZ = -0.45;
+      // Flask body (wide sphere-ish using scaled sphere)
+      const flaskBodyGeo = new THREE.SphereGeometry(0.052, 14, 10);
+      flaskBodyGeo.scale(1, 1.1, 1);
+      const flaskMat = new THREE.MeshStandardMaterial({
+        color: 0x88DDAA, emissive: 0x22AA55, emissiveIntensity: 0.4,
+        transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0.1
+      });
+      const flaskBody = new THREE.Mesh(flaskBodyGeo, flaskMat);
+      flaskBody.position.set(flaskX, flaskY + 0.055, flaskZ);
+      scene.add(flaskBody);
+      // Flask neck
+      const flaskNeck = mkCyl(0.014, 0.022, 0.065, 10,
+        new THREE.MeshStandardMaterial({ color: 0x99EEBB, transparent: true, opacity: 0.5, roughness: 0.05 }));
+      flaskNeck.position.set(flaskX, flaskY + 0.13, flaskZ);
+      scene.add(flaskNeck);
+      // Cork
+      const cork = mkCyl(0.015, 0.017, 0.022, 10, std(0x8B6040, 0.9));
+      cork.position.set(flaskX, flaskY + 0.168, flaskZ);
+      scene.add(cork);
+      // Liquid inside
+      const liquidGeo = new THREE.SphereGeometry(0.044, 12, 8);
+      const liquidMat = new THREE.MeshStandardMaterial({
+        color: 0x00FF88, emissive: 0x00CC55, emissiveIntensity: 1.2,
+        transparent: true, opacity: 0.7, roughness: 0.1
+      });
+      const liquid = new THREE.Mesh(liquidGeo, liquidMat);
+      liquid.position.set(flaskX, flaskY + 0.048, flaskZ);
+      scene.add(liquid);
+      // Bubbles inside flask
+      const bubbles = Array.from({ length: 5 }, (_, i) => {
+        const b = new THREE.Mesh(
+          new THREE.SphereGeometry(0.006 + Math.random() * 0.005, 6, 6),
+          new THREE.MeshBasicMaterial({ color: 0xAAFFCC, transparent: true, opacity: 0.7 })
+        );
+        b.position.set(
+          flaskX + (Math.random() - 0.5) * 0.04,
+          flaskY + 0.02 + Math.random() * 0.05,
+          flaskZ + (Math.random() - 0.5) * 0.04
+        );
+        b.userData = { baseY: b.position.y, speed: 0.008 + Math.random() * 0.012, offset: Math.random() * Math.PI * 2 };
+        scene.add(b);
+        return b;
+      });
+      // Flask glow light
+      const flaskLight = new THREE.PointLight(0x00FF88, 0.6, 1.2, 2);
+      flaskLight.position.set(flaskX, flaskY + 0.1, flaskZ);
+      scene.add(flaskLight);
+
+      /* ── 4. BUTTERFLY near window ── */
+      const bfMat = new THREE.MeshStandardMaterial({ color: 0xFFAA22, emissive: 0xFF8800, emissiveIntensity: 0.3, side: THREE.DoubleSide, transparent: true, opacity: 0.88 });
+      const bfMat2 = new THREE.MeshStandardMaterial({ color: 0xFF6600, emissive: 0xFF4400, emissiveIntensity: 0.2, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+      const bfGroup = new THREE.Group();
+      // Wing shape — two scaled planes per side
+      [[1, bfMat], [-1, bfMat2]].forEach(([side, mat]) => {
+        const wing = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.075), mat);
+        wing.position.set(side * 0.055, 0, 0);
+        wing.rotation.y = side * 0.3;
+        bfGroup.add(wing);
+        const wingLo = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.055), mat);
+        wingLo.position.set(side * 0.045, -0.04, 0);
+        wingLo.rotation.y = side * 0.4;
+        bfGroup.add(wingLo);
+      });
+      // Body
+      const bfBody = mkCyl(0.006, 0.004, 0.065, 6, std(0x2A1A08, 0.8));
+      bfGroup.add(bfBody);
+      bfGroup.position.set(-2.6, 2.5, -0.3);
+      bfGroup.userData = { t: 0 };
+      scene.add(bfGroup);
+
+      /* ── 5. SELF-WRITING QUILL animation data ── */
+      // The quill already exists — we just animate it in the loop
+      // Store ref for animation
+      scene.userData.lightModeAnimated = { bubbles, flaskLight, flaskBody, liquid, bfGroup };
     }
 
     /* ── WOODEN BARREL (right, like image) ── */
@@ -574,7 +760,63 @@ const SceneCanvas = ({ isDark }) => {
       lamp1.orb.scale.setScalar(1 + Math.sin(t * 6.5) * 0.06);
       lamp2.orb.scale.setScalar(1 + Math.sin(t * 5.8) * 0.07);
 
-      // Dust particles
+      // Candle flame flicker (dark mode only)
+      if (isDark && scene.userData.darkModeAnimated) {
+        const { candleLight, flameOuter, flameInner, glowSprite, candleX } = scene.userData.darkModeAnimated;
+        const flicker = 0.85 + Math.sin(t * 11.3) * 0.1 + Math.sin(t * 17.7) * 0.06 + (Math.random() - 0.5) * 0.08;
+        candleLight.intensity = 2.2 * flicker;
+        flameOuter.material.emissiveIntensity = 4 * flicker;
+        flameInner.material.emissiveIntensity = 6 * flicker;
+        const sway = Math.sin(t * 8.4) * 0.004;
+        flameOuter.position.x = candleX + sway;
+        flameInner.position.x = candleX + sway * 0.6;
+        flameOuter.scale.y = 0.88 + Math.sin(t * 12) * 0.14;
+        flameInner.scale.y = 0.88 + Math.sin(t * 10 + 1) * 0.12;
+        glowSprite.quaternion.copy(camera.quaternion);
+        glowSprite.material.opacity = 0.2 + flicker * 0.12;
+      }
+
+      // Light mode animations
+      if (!isDark && scene.userData.lightModeAnimated) {
+        const { bubbles, flaskLight, flaskBody, liquid, bfGroup } = scene.userData.lightModeAnimated;
+
+        // Flask glow pulse
+        flaskLight.intensity = 0.5 + Math.sin(t * 2.2) * 0.2;
+        flaskBody.material.emissiveIntensity = 0.35 + Math.sin(t * 1.8) * 0.15;
+        liquid.material.emissiveIntensity = 1.1 + Math.sin(t * 2.5) * 0.4;
+
+        // Bubbles rise and reset
+        bubbles.forEach(b => {
+          b.position.y += b.userData.speed * 0.4;
+          b.position.x += Math.sin(t * 3 + b.userData.offset) * 0.0008;
+          if (b.position.y > flaskBody.position.y + 0.06) {
+            b.position.y = flaskBody.position.y - 0.04;
+          }
+        });
+
+        // Butterfly flutter + drift path
+        bfGroup.userData.t += 0.012;
+        const bt = bfGroup.userData.t;
+        // Figure-8 drift near window
+        bfGroup.position.set(
+          -2.6 + Math.sin(bt * 0.7) * 0.35,
+          2.4 + Math.sin(bt * 1.1) * 0.25,
+          -0.3 + Math.sin(bt * 0.5) * 0.3
+        );
+        // Wing flap — rotate upper wings
+        bfGroup.children.forEach((child, i) => {
+          if (i < 2) child.rotation.y = (i === 0 ? 1 : -1) * (0.2 + Math.abs(Math.sin(bt * 8)) * 0.9);
+        });
+        bfGroup.rotation.y = Math.atan2(
+          Math.cos(bt * 0.7) * 0.35,
+          Math.cos(bt * 0.5) * 0.3
+        );
+
+        // Self-writing quill dip animation
+        const quillDip = Math.sin(t * 0.8);
+        quillShaft.position.y = 0.96 + (quillDip < -0.85 ? (quillDip + 0.85) * 0.06 : 0);
+        quillShaft.rotation.z = Math.PI / 2 - 0.3 + Math.sin(t * 1.6) * 0.08;
+      }
       dusts.forEach(d => {
         d.userData.life += d.userData.speed;
         const lt = d.userData.life / d.userData.maxLife;

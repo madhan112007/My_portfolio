@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useSoundEffects } from '../hooks/useSoundEffects';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const LABELS = {
@@ -25,21 +24,38 @@ const CornerOrnament = ({ pos }) => {
   );
 };
 
+// Gold ink wipe overlay — animates across the screen between sections
+const InkWipe = ({ isAnimating }) => (
+  <motion.div
+    initial={{ scaleX: 0, originX: 0 }}
+    animate={isAnimating ? { scaleX: [0, 1, 1, 0] } : { scaleX: 0 }}
+    transition={{ duration: 0.7, times: [0, 0.45, 0.55, 1], ease: 'easeInOut' }}
+    style={{
+      position: 'absolute', inset: 0, zIndex: 20,
+      background: 'linear-gradient(105deg, var(--accent-color) 0%, var(--glow-color) 50%, var(--accent-color) 100%)',
+      transformOrigin: 'left center',
+      pointerEvents: 'none',
+      opacity: 0.18,
+    }}
+  />
+);
+
 const ThreeBook = ({ pages }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { playPageTurn } = useSoundEffects();
 
   const currentIndex = pages.findIndex(p => p.path === location.pathname);
   const safeIndex = currentIndex === -1 ? 0 : currentIndex;
 
   const [direction, setDirection] = useState(1);
-  const prevIndexRef = React.useRef(0);
+  const [wiping, setWiping] = useState(false);
+  const prevIndexRef = React.useRef(safeIndex);
 
   useEffect(() => {
     if (safeIndex !== prevIndexRef.current) {
       setDirection(safeIndex > prevIndexRef.current ? 1 : -1);
-      playPageTurn();
+      setWiping(true);
+      setTimeout(() => setWiping(false), 700);
       prevIndexRef.current = safeIndex;
     }
   }, [safeIndex]);
@@ -49,21 +65,25 @@ const ThreeBook = ({ pages }) => {
   const canPrev = safeIndex > 0;
   const canNext = safeIndex < pages.length - 1;
 
+  // Ink dissolve: content fades + blurs + slides slightly, like ink being absorbed into parchment
   const variants = {
     enter: (d) => ({
-      rotateY: d > 0 ? 90 : -90,
       opacity: 0,
-      transformOrigin: d > 0 ? 'left center' : 'right center',
+      y: d > 0 ? 28 : -28,
+      scale: 0.97,
+      filter: 'blur(6px)',
     }),
     center: {
-      rotateY: 0,
       opacity: 1,
-      transformOrigin: 'center center',
+      y: 0,
+      scale: 1,
+      filter: 'blur(0px)',
     },
     exit: (d) => ({
-      rotateY: d > 0 ? -90 : 90,
       opacity: 0,
-      transformOrigin: d > 0 ? 'right center' : 'left center',
+      y: d > 0 ? -28 : 28,
+      scale: 0.97,
+      filter: 'blur(6px)',
     }),
   };
 
@@ -104,9 +124,8 @@ const ThreeBook = ({ pages }) => {
           borderRadius: '0 6px 6px 0',
           overflow: 'hidden',
           boxShadow: '4px 0 30px rgba(0,0,0,0.4),0 8px 40px rgba(0,0,0,0.3)',
-          perspective: '1400px',
         }}>
-          {/* Page background always visible */}
+          {/* Page background */}
           <div style={{
             position: 'absolute', inset: 0,
             background: 'var(--surface-color)',
@@ -117,6 +136,9 @@ const ThreeBook = ({ pages }) => {
           <CornerOrnament pos="tl" /><CornerOrnament pos="tr" />
           <CornerOrnament pos="bl" /><CornerOrnament pos="br" />
 
+          {/* Gold ink wipe overlay */}
+          <InkWipe isAnimating={wiping} />
+
           {/* Animated page content */}
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -126,21 +148,23 @@ const ThreeBook = ({ pages }) => {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-              style={{
-                position: 'absolute', inset: 0, zIndex: 2,
-                transformStyle: 'preserve-3d',
-              }}
+              transition={{ duration: 0.42, ease: [0.25, 0.46, 0.45, 0.94] }}
+              style={{ position: 'absolute', inset: 0, zIndex: 2 }}
             >
               {/* Section label */}
-              <div style={{
-                position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
-                fontFamily: 'Cinzel Decorative,serif', fontSize: 8,
-                letterSpacing: '0.35em', color: 'var(--accent-color)', opacity: 0.55,
-                whiteSpace: 'nowrap', zIndex: 3,
-              }}>
+              <motion.div
+                initial={{ opacity: 0, letterSpacing: '0.6em' }}
+                animate={{ opacity: 0.55, letterSpacing: '0.35em' }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                style={{
+                  position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
+                  fontFamily: 'Cinzel Decorative,serif', fontSize: 8,
+                  color: 'var(--accent-color)',
+                  whiteSpace: 'nowrap', zIndex: 3,
+                }}
+              >
                 ✦ {LABELS[location.pathname] || ''} ✦
-              </div>
+              </motion.div>
 
               {/* Page content */}
               <div style={{ padding: '36px 32px 72px', height: '100%', overflowY: 'auto', boxSizing: 'border-box' }}>
@@ -149,12 +173,12 @@ const ThreeBook = ({ pages }) => {
             </motion.div>
           </AnimatePresence>
 
-          {/* Bottom nav — always on top */}
+          {/* Bottom nav */}
           <div style={{
             position: 'absolute', bottom: 12, left: 0, right: 0, zIndex: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px',
           }}>
-            <motion.button whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.95 }}
+            <motion.button whileHover={{ scale: 1.12, x: -2 }} whileTap={{ scale: 0.95 }}
               onClick={() => canPrev && goTo(safeIndex - 1)}
               style={{
                 background: 'none', border: '1px solid var(--border-faint)', borderRadius: 2,
@@ -181,7 +205,7 @@ const ThreeBook = ({ pages }) => {
               </div>
             </div>
 
-            <motion.button whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.95 }}
+            <motion.button whileHover={{ scale: 1.12, x: 2 }} whileTap={{ scale: 0.95 }}
               onClick={() => canNext && goTo(safeIndex + 1)}
               style={{
                 background: 'none', border: '1px solid var(--border-faint)', borderRadius: 2,

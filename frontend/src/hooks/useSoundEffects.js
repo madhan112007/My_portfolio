@@ -18,43 +18,109 @@ export const useSoundEffects = () => {
     const sr = ctx.sampleRate;
     const now = ctx.currentTime;
 
-    // Layer 1 — soft swish (low-mid paper sweep)
-    const swishDur = 0.45;
-    const swishBuf = ctx.createBuffer(1, Math.floor(sr * swishDur), sr);
-    const swishData = swishBuf.getChannelData(0);
-    for (let i = 0; i < swishData.length; i++) {
-      const t = i / swishData.length;
-      swishData[i] = (Math.random() * 2 - 1) * Math.pow(Math.sin(t * Math.PI), 1.2);
+    // ── LAYER 1: Soft page turn — parchment rustle (shaped noise, mid frequencies)
+    const rustle = ctx.createBuffer(2, Math.floor(sr * 0.55), sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = rustle.getChannelData(ch);
+      for (let i = 0; i < d.length; i++) {
+        const t = i / d.length;
+        // envelope: fast attack, sustain, slow tail
+        const env = Math.pow(Math.sin(t * Math.PI), 0.7) * (1 - t * 0.4);
+        d[i] = (Math.random() * 2 - 1) * env;
+      }
     }
-    const swishSrc = ctx.createBufferSource();
-    swishSrc.buffer = swishBuf;
-    const lp1 = ctx.createBiquadFilter();
-    lp1.type = 'lowpass'; lp1.frequency.value = 800;
-    const bp1 = ctx.createBiquadFilter();
-    bp1.type = 'bandpass'; bp1.frequency.value = 600; bp1.Q.value = 0.8;
-    bp1.frequency.linearRampToValueAtTime(300, now + swishDur);
-    const g1 = ctx.createGain();
-    g1.gain.setValueAtTime(0.28, now);
-    g1.gain.exponentialRampToValueAtTime(0.001, now + swishDur);
-    swishSrc.connect(lp1); lp1.connect(bp1); bp1.connect(g1); g1.connect(ctx.destination);
-    swishSrc.start(now);
+    const rustleSrc = ctx.createBufferSource();
+    rustleSrc.buffer = rustle;
+    // Band the noise to paper frequencies (400–3000 Hz)
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 400;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3000;
+    // Sweep the bandpass to mimic paper moving
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(1800, now);
+    bp.frequency.exponentialRampToValueAtTime(600, now + 0.45);
+    const rustleGain = ctx.createGain();
+    rustleGain.gain.setValueAtTime(0, now);
+    rustleGain.gain.linearRampToValueAtTime(0.22, now + 0.04);
+    rustleGain.gain.setValueAtTime(0.22, now + 0.25);
+    rustleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    rustleSrc.connect(hp); hp.connect(bp); bp.connect(lp); lp.connect(rustleGain);
+    rustleGain.connect(ctx.destination);
+    rustleSrc.start(now);
 
-    // Layer 2 — gentle thud (page landing)
-    const thudDur = 0.15;
-    const thudBuf = ctx.createBuffer(1, Math.floor(sr * thudDur), sr);
+    // ── LAYER 2: Magical whoosh — pitched sweep (sine + sawtooth blend)
+    const whooshOsc1 = ctx.createOscillator();
+    const whooshOsc2 = ctx.createOscillator();
+    whooshOsc1.type = 'sine';
+    whooshOsc2.type = 'sawtooth';
+    // Sweep pitch upward then settle — like magic energy releasing
+    whooshOsc1.frequency.setValueAtTime(180, now);
+    whooshOsc1.frequency.exponentialRampToValueAtTime(520, now + 0.18);
+    whooshOsc1.frequency.exponentialRampToValueAtTime(320, now + 0.45);
+    whooshOsc2.frequency.setValueAtTime(200, now);
+    whooshOsc2.frequency.exponentialRampToValueAtTime(480, now + 0.2);
+    whooshOsc2.frequency.exponentialRampToValueAtTime(280, now + 0.45);
+    // Sawtooth is harsh — tame with lowpass
+    const whooshFilter = ctx.createBiquadFilter();
+    whooshFilter.type = 'lowpass';
+    whooshFilter.frequency.setValueAtTime(600, now);
+    whooshFilter.frequency.exponentialRampToValueAtTime(200, now + 0.45);
+    const whooshGain = ctx.createGain();
+    whooshGain.gain.setValueAtTime(0, now);
+    whooshGain.gain.linearRampToValueAtTime(0.09, now + 0.06);
+    whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+    whooshOsc1.connect(whooshGain);
+    whooshOsc2.connect(whooshFilter); whooshFilter.connect(whooshGain);
+    whooshGain.connect(ctx.destination);
+    whooshOsc1.start(now); whooshOsc1.stop(now + 0.5);
+    whooshOsc2.start(now); whooshOsc2.stop(now + 0.5);
+
+    // ── LAYER 3: Soft bell chime — pure sine harmonics at page land
+    // Three harmonically related notes: root + major third + fifth
+    const chimeT = now + 0.38; // fires as page lands
+    const chimeNotes = [523.25, 659.25, 783.99]; // C5, E5, G5 — a bright major chord
+    chimeNotes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      // Slight detune for warmth
+      osc.detune.value = (i - 1) * 4;
+      const chimeGain = ctx.createGain();
+      const onset = chimeT + i * 0.045; // stagger each note slightly
+      chimeGain.gain.setValueAtTime(0, onset);
+      chimeGain.gain.linearRampToValueAtTime(0.1 - i * 0.02, onset + 0.012);
+      chimeGain.gain.exponentialRampToValueAtTime(0.001, onset + 1.1);
+      // Gentle reverb-like effect using delay feedback
+      const delay = ctx.createDelay(0.5);
+      delay.delayTime.value = 0.12 + i * 0.04;
+      const fbGain = ctx.createGain();
+      fbGain.gain.value = 0.25;
+      const chimeLp = ctx.createBiquadFilter();
+      chimeLp.type = 'lowpass'; chimeLp.frequency.value = 4000;
+      osc.connect(chimeGain);
+      chimeGain.connect(ctx.destination);
+      chimeGain.connect(delay); delay.connect(fbGain);
+      fbGain.connect(chimeLp); chimeLp.connect(delay);
+      chimeLp.connect(ctx.destination);
+      osc.start(onset); osc.stop(onset + 1.4);
+    });
+
+    // ── LAYER 4: Page thud — low percussive hit as page settles
+    const thudBuf = ctx.createBuffer(1, Math.floor(sr * 0.12), sr);
     const thudData = thudBuf.getChannelData(0);
-    for (let i = 0; i < thudData.length; i++) {
-      thudData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / thudData.length, 4);
-    }
+    for (let i = 0; i < thudData.length; i++)
+      thudData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / thudData.length, 5);
     const thudSrc = ctx.createBufferSource();
     thudSrc.buffer = thudBuf;
-    const lp2 = ctx.createBiquadFilter();
-    lp2.type = 'lowpass'; lp2.frequency.value = 300;
-    const g2 = ctx.createGain();
-    const thudT = now + 0.3;
-    g2.gain.setValueAtTime(0.3, thudT);
-    g2.gain.exponentialRampToValueAtTime(0.001, thudT + thudDur);
-    thudSrc.connect(lp2); lp2.connect(g2); g2.connect(ctx.destination);
+    const thudLp = ctx.createBiquadFilter();
+    thudLp.type = 'lowpass'; thudLp.frequency.value = 280;
+    const thudGain = ctx.createGain();
+    const thudT = now + 0.36;
+    thudGain.gain.setValueAtTime(0.18, thudT);
+    thudGain.gain.exponentialRampToValueAtTime(0.001, thudT + 0.12);
+    thudSrc.connect(thudLp); thudLp.connect(thudGain); thudGain.connect(ctx.destination);
     thudSrc.start(thudT);
   }, []);
 

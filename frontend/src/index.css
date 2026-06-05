@@ -39,12 +39,17 @@
   --surface-hover: #251808;
   --text-primary: #F5EDD6;
   --text-secondary: #C9A84C;
-  --accent-color: #FFD700;
-  --glow-color: rgba(255,215,0,0.4);
+  --accent-color: #E8A020;
+  --glow-color: rgba(232,160,32,0.4);
   --border-color: #6B4F1A;
-  --border-faint: rgba(255,215,0,0.15);
+  --border-faint: rgba(232,160,32,0.15);
   --nav-bg: rgba(13,10,6,0.94);
-  --card-shadow: 0 4px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,215,0,0.06);
+  --card-shadow: 0 4px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(232,160,32,0.06);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 @layer base {
